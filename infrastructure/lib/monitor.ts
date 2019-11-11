@@ -44,7 +44,6 @@ export class MonitorCheck extends Construct {
     props.table.grantReadData(monitorCheck);
 
     this.rule = new Rule(this, 'MonitorUpdate', {
-      ruleName: 'SHS Status Interval Ping',
       description: 'Checks the status of all registered monitors for SHS.',
       schedule: Schedule.rate(Duration.minutes(1)),
       targets: [new LambdaFunction(monitorCheck)],

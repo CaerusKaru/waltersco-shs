@@ -2,7 +2,7 @@ import {Construct, RemovalPolicy} from '@aws-cdk/core';
 import {Bucket} from '@aws-cdk/aws-s3';
 import {BucketDeployment, Source} from '@aws-cdk/aws-s3-deployment';
 import {DnsValidatedCertificate} from '@aws-cdk/aws-certificatemanager';
-import {AaaaRecord, ARecord, HostedZone, RecordTarget} from '@aws-cdk/aws-route53';
+import {AaaaRecord, ARecord, HostedZone, RecordTarget, IHostedZone} from '@aws-cdk/aws-route53';
 import {BucketWebsiteTarget, CloudFrontTarget} from '@aws-cdk/aws-route53-targets';
 import {
   CfnCloudFrontOriginAccessIdentity,
@@ -26,7 +26,7 @@ export interface StaticWebsiteProps {
    * The hosted zone for the static website, e.g. example.com
    * @default no DNS; required with domainName
    */
-  hostedZone?: string;
+  hostedZone?: IHostedZone;
 
   /**
    * The domain name for the static website, e.g. test.example.com
@@ -118,7 +118,7 @@ export class StaticWebsite extends Construct {
 
     const sourceConfigs: SourceConfiguration[] = (props.sourceConfigs || [])
       .map((config: SourceConfiguration) => {
-        let fixedConfig = {...config};
+        const fixedConfig = {...config};
         if (!fixedConfig.s3OriginSource && !fixedConfig.customOriginSource) {
           fixedConfig.s3OriginSource = {
             originAccessIdentityId: this.originAccessIdentity.ref,
@@ -173,14 +173,10 @@ export class StaticWebsite extends Construct {
     };
 
     if (props.hostedZone && props.domainName) {
-      const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {
-        domainName: props.hostedZone,
-        privateZone: false
-      });
 
       this.certificate = new DnsValidatedCertificate(this, 'Certificate', {
         domainName: props.domainName,
-        hostedZone: hostedZone,
+        hostedZone: props.hostedZone,
         region: 'us-east-1',
       });
 
@@ -195,13 +191,13 @@ export class StaticWebsite extends Construct {
       this.aRecord = new ARecord(this, 'Record', {
         recordName: props.domainName,
         target: RecordTarget.fromAlias(new CloudFrontTarget(this.distribution)),
-        zone: hostedZone
+        zone: props.hostedZone
       });
 
       this.aaaaRecord = new AaaaRecord(this, 'AAAARecord', {
         recordName: props.domainName,
         target: RecordTarget.fromAlias(new CloudFrontTarget(this.distribution)),
-        zone: hostedZone
+        zone: props.hostedZone
       });
     } else {
       this.distribution = new CloudFrontWebDistribution(this, 'SWCFDistribution', cloudFrontProps);

@@ -1,10 +1,18 @@
-import {Construct, RemovalPolicy} from '@aws-cdk/core';
-import {LambdaIntegration, RestApi} from '@aws-cdk/aws-apigateway';
+import {DomainNameOptions, DomainNameProps, EndpointType, LambdaIntegration, RestApi} from '@aws-cdk/aws-apigateway';
+import { DnsValidatedCertificate } from '@aws-cdk/aws-certificatemanager';
 import {AttributeType, Table} from '@aws-cdk/aws-dynamodb';
-import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
-import {join} from 'path';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
+import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
+import { IHostedZone } from '@aws-cdk/aws-route53';
+import {CfnOutput, Construct, RemovalPolicy} from '@aws-cdk/core';
+import {join} from 'path';
 
+const PARTITION_KEY_NAME = 'monitorId';
+
+export interface ApiProps {
+  readonly domainName?: string;
+  readonly hostedZone?: IHostedZone;
+}
 
 /**
  * The WaltersCo Service Health System (SHS) is a centralized internal service which continuously monitors all our
@@ -18,10 +26,10 @@ import { PolicyStatement } from '@aws-cdk/aws-iam';
  * The API fronts a DynamoDB table that stores all of the monitors for access later.
  */
 export class Api extends Construct {
-  readonly api: RestApi;
-  readonly table: Table;
+  public readonly api: RestApi;
+  public readonly table: Table;
 
-  constructor(parent: Construct, name: string) {
+  constructor(parent: Construct, name: string, props: ApiProps = { }) {
     super(parent, name);
 
     // Create the table to store the monitor configurations
@@ -106,9 +114,25 @@ export class Api extends Construct {
 
     // Create the API to access the monitors
 
+    let domainNameOptions: DomainNameOptions | undefined;
+    if (props.domainName && props.hostedZone) {
+      domainNameOptions = {
+        certificate: new DnsValidatedCertificate(this, 'Certificate', {
+          domainName: props.domainName,
+          hostedZone: props.hostedZone,
+          region: 'us-east-1',
+        }),
+        endpointType: EndpointType.EDGE,
+        domainName: props.domainName
+      };
+
+      new CfnOutput(this, 'DomainEndpoint', { value: `https://${props.domainName}` });
+    }
+
     this.api = new RestApi(this, 'SHS API', {
       restApiName: 'Service Health System',
       description: 'This service registers and fetches monitors and their statuses.',
+      domainName: domainNameOptions
     });
 
     const status = this.api.root.addResource('status');
@@ -132,5 +156,3 @@ export class Api extends Construct {
     singleMonitor.addCorsPreflight({allowOrigins: ['*'], allowMethods: ['PUT', 'DELETE']});
   }
 }
-
-const PARTITION_KEY_NAME = 'monitorId';

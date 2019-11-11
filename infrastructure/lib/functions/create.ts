@@ -1,57 +1,48 @@
-import {ComparisonOperator} from '@aws-cdk/aws-cloudwatch';
-
-const AWS = require('aws-sdk');
+import AWS = require('aws-sdk');
 const db = new AWS.DynamoDB.DocumentClient();
 const cw = new AWS.CloudWatch();
-const uuidv4 = require('uuid/v4');
+import crypto = require("crypto");
+import { httpResponse, httpServerError } from './http-response';
 const TABLE_NAME = process.env.TABLE_NAME || '';
 const PRIMARY_KEY = process.env.PRIMARY_KEY || '';
 
-const RESERVED_RESPONSE = `Error: You're using AWS reserved keywords as attributes`;
-const EXECUTION_ERROR = `Error: Execution update, caused an error, please take a look at your CloudWatch Logs.`;
-
-export const handler = async (event: any = {}) : Promise <any> => {
-
+export const handler = async (event: any = {}): Promise <any> => {
   if (!event.body) {
-    return {
-      statusCode: 400,
-      body: 'invalid request, you are missing the parameter body',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+    return httpResponse({ error: 'invalid request, you are missing the parameter body' }, 400);
   }
-  const item = typeof event.body == 'object' ? event.body : JSON.parse(event.body);
-  const itemId = uuidv4();
-  item[PRIMARY_KEY] = itemId;
-  const params = {
+
+  const item = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
+  const itemId = generateId();
+  const fullItem = {
+    [PRIMARY_KEY]: itemId,
+    ...item
+  };
+
+  const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
     TableName: TABLE_NAME,
-    Item: item
+    Item: fullItem
   };
 
   try {
     await db.put(params).promise();
+
     await cw.putMetricAlarm({
+      MetricName: 'Pings',
+      Statistic: 'Sum',
+      Namespace: 'ServiceHealthSystem',
+      Period: 60,
       AlarmName: itemId,
-      ComparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+      ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 1,
-    });
-    return {
-      statusCode: 201,
-      body: '',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
-  } catch (dbError) {
-    const errorResponse = dbError.code === 'ValidationException' && dbError.message.includes('reserved keyword') ?
-      RESERVED_RESPONSE : EXECUTION_ERROR;
-    return {
-      statusCode: 400,
-      body: errorResponse,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+      Threshold: 1
+    }).promise();
+
+    return httpResponse(fullItem, 201);
+  } catch (error) {
+    return httpServerError(error);
   }
 };
+
+function generateId() {
+  return crypto.randomBytes(16).toString("hex");
+}
