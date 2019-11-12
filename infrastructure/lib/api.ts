@@ -3,7 +3,8 @@ import { DnsValidatedCertificate } from '@aws-cdk/aws-certificatemanager';
 import {AttributeType, Table} from '@aws-cdk/aws-dynamodb';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
 import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
-import { IHostedZone } from '@aws-cdk/aws-route53';
+import { AddressRecordTarget, ARecord, IHostedZone } from '@aws-cdk/aws-route53';
+import { ApiGateway } from '@aws-cdk/aws-route53-targets';
 import {CfnOutput, Construct, RemovalPolicy} from '@aws-cdk/core';
 import {join} from 'path';
 
@@ -134,6 +135,16 @@ export class Api extends Construct {
       description: 'This service registers and fetches monitors and their statuses.',
       domainName: domainNameOptions
     });
+
+    if (props.hostedZone && props.domainName) {
+      const parts = props.domainName.split('.');
+      const recordName = parts.slice(0, parts.length - 2).join('.');
+      new ARecord(this, 'CustomDomainAliasRecord', {
+        zone: props.hostedZone,
+        recordName,
+        target: AddressRecordTarget.fromAlias(new ApiGateway(this.api))
+      });
+    }
 
     const status = this.api.root.addResource('status');
     const getStatusIntegration = new LambdaIntegration(getAll);
