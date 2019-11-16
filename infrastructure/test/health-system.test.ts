@@ -1,9 +1,6 @@
-import {App, Stack} from '@aws-cdk/core';
 import {expect as expectCDK, haveResource} from '@aws-cdk/assert';
-import {join} from 'path';
-
+import {App, Stack} from '@aws-cdk/core';
 import {ServiceHealthSystem} from '../lib/health-system';
-
 
 // This is basically a duplicate of infrastructure.test, mostly because that's
 // just a wrapper over this construct
@@ -17,9 +14,6 @@ test('HealthSystem', () => {
     },
   });
   new ServiceHealthSystem(stack, 'HS', {
-    websiteProps: {
-      artifactSourcePath: join(__dirname, 'dist'),
-    }
   });
   // THEN
   expectCDK(stack).to(haveResource('AWS::S3::Bucket'));

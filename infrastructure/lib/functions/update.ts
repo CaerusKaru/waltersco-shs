@@ -1,81 +1,59 @@
-const AWS = require('aws-sdk');
+import AWS = require('aws-sdk');
+import { httpNotFoundError, httpResponse, httpServerError } from './http-response';
 const db = new AWS.DynamoDB.DocumentClient();
 const TABLE_NAME = process.env.TABLE_NAME || '';
 const PRIMARY_KEY = process.env.PRIMARY_KEY || '';
 
-const RESERVED_RESPONSE = `Error: You're using AWS reserved keywords as attributes`;
-const DYNAMODB_EXECUTION_ERROR = `Error: Execution update, caused a DynamoDB error, please take a look at your CloudWatch Logs.`;
-
-export const handler = async (event: any = {}) : Promise <any> => {
-
+export const handler = async (event: any = {}): Promise <any> => {
   if (!event.body) {
-    return {
-      statusCode: 400,
-      body: 'invalid request, you are missing the parameter body',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+    return httpResponse('invalid request, you are missing the parameter body', 400);
   }
 
   const editedItemId = event.pathParameters.id;
   if (!editedItemId) {
-    return {
-      statusCode: 400,
-      body: 'invalid request, you are missing the path parameter id',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+    return httpResponse({ error: 'invalid request, you are missing the path parameter id' }, 400);
   }
 
-  const editedItem: any = typeof event.body == 'object' ? event.body : JSON.parse(event.body);
-  const editedItemProperties = Object.keys(editedItem);
-  if (!editedItem || editedItemProperties.length < 1) {
-    return {
-      statusCode: 400,
-      body: 'invalid request, no arguments provided',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+  const editedItem: any = (typeof event.body === 'object' ? event.body : JSON.parse(event.body)) || { };
+
+  if (Object.keys(editedItem).length === 0) {
+    return httpResponse({ error: 'invalid request, no arguments provided' }, 400);
   }
 
-  const firstProperty = editedItemProperties.splice(0,1);
-  const params: any = {
+  const updates = new Array<string>();
+  const attrValues: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap = { };
+  const attrNames: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap = { };
+
+  let attrIndex = 0;
+  for (const [ name, value ] of Object.entries(editedItem)) {
+    const attrValue = `:attr${attrIndex}`;
+    const attrName = `#attr${attrIndex}`;
+    updates.push(`${attrName} = ${attrValue}`);
+    attrValues[attrValue] = value;
+    attrNames[attrName] = `${name}`;
+
+    attrIndex++;
+  }
+
+  const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
     TableName: TABLE_NAME,
     Key: {
       [PRIMARY_KEY]: editedItemId
     },
-    UpdateExpression: `set ${firstProperty} = :${firstProperty}`,
-    ExpressionAttributeValues: {},
-    ReturnValues: 'UPDATED_NEW'
+    UpdateExpression: `set ` + updates.join(', '),
+    ExpressionAttributeValues: attrValues,
+    ExpressionAttributeNames: attrNames,
+    ConditionExpression: `attribute_exists(${PRIMARY_KEY})`,
+    ReturnValues: 'ALL_NEW'
   };
-  params.ExpressionAttributeValues[`:${firstProperty}`] = editedItem[`${firstProperty}`];
-
-  editedItemProperties.forEach(property => {
-    params.UpdateExpression += `, ${property} = :${property}`;
-    params.ExpressionAttributeValues[`:${property}`] = editedItem[property];
-  });
 
   try {
-    await db.update(params).promise();
-    return {
-      statusCode: 204,
-      body: '',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
-  } catch (dbError) {
-    const errorResponse = dbError.code === 'ValidationException' && dbError.message.includes('reserved keyword') ?
-      DYNAMODB_EXECUTION_ERROR : RESERVED_RESPONSE;
-    return {
-      statusCode: 500,
-      body: errorResponse,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+    const ret = await db.update(params).promise();
+    return httpResponse(ret.Attributes, 200);
+  } catch (error) {
+    if (error.code === 'ConditionalCheckFailedException') {
+      return httpNotFoundError(editedItemId);
+    }
+    return httpServerError(error);
   }
 };

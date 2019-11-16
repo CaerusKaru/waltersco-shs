@@ -1,9 +1,8 @@
-import {App, Stack} from '@aws-cdk/core';
 import {expect as expectCDK, haveResource} from '@aws-cdk/assert';
+import {App, Stack} from '@aws-cdk/core';
 
-import {MonitorCheck} from '../lib/monitor';
 import {AttributeType, Table} from '@aws-cdk/aws-dynamodb';
-
+import {MonitorCheck} from '../lib/monitor';
 
 test('MonitorCheck', () => {
   // WHEN
@@ -25,47 +24,47 @@ test('MonitorCheck', () => {
   });
   // THEN
   expectCDK(stack).to(haveResource('AWS::Events::Rule', {
-    "ScheduleExpression": "rate(1 minute)",
-    "State": "ENABLED",
-    "Targets": [
+    ScheduleExpression: "rate(1 minute)",
+    State: "ENABLED",
+    Targets: [
       {
-        "Arn": {
+        Arn: {
           "Fn::GetAtt": [
             "MonitorCheckUpdateFunction65B0A250",
             "Arn"
           ]
         },
-        "Id": "Target0"
+        Id: "Target0"
       }
     ]
   }));
   expectCDK(stack).to(haveResource('AWS::Lambda::Function', {
-    "Handler": "monitor-check.handler",
-    "Role": {
+    Handler: "monitor-check.handler",
+    Role: {
       "Fn::GetAtt": [
         "MonitorCheckUpdateFunctionServiceRole21B28516",
         "Arn"
       ]
     },
-    "Runtime": "nodejs10.x",
-    "Environment": {
-      "Variables": {
-        "TABLE_NAME": {
-          "Ref": "TableCD117FA1"
+    Runtime: "nodejs10.x",
+    Environment: {
+      Variables: {
+        TABLE_NAME: {
+          Ref: "TableCD117FA1"
         }
       }
     }
   }));
   expectCDK(stack).to(haveResource('AWS::IAM::Policy', {
-    "PolicyDocument": {
-      "Statement": [
+    PolicyDocument: {
+      Statement: [
         {
-          "Action": "cloudwatch:SetAlarmState",
-          "Effect": "Allow",
-          "Resource": "*"
+          Action: "cloudwatch:SetAlarmState",
+          Effect: "Allow",
+          Resource: "*"
         },
         {
-          "Action": [
+          Action: [
             "dynamodb:BatchGetItem",
             "dynamodb:GetRecords",
             "dynamodb:GetShardIterator",
@@ -73,8 +72,8 @@ test('MonitorCheck', () => {
             "dynamodb:GetItem",
             "dynamodb:Scan"
           ],
-          "Effect": "Allow",
-          "Resource": [
+          Effect: "Allow",
+          Resource: [
             {
               "Fn::GetAtt": [
                 "TableCD117FA1",
@@ -82,12 +81,12 @@ test('MonitorCheck', () => {
               ]
             },
             {
-              "Ref": "AWS::NoValue"
+              Ref: "AWS::NoValue"
             }
           ]
         }
       ],
-      "Version": "2012-10-17"
+      Version: "2012-10-17"
     },
   }));
 });
