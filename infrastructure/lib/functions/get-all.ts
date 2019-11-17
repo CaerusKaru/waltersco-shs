@@ -14,8 +14,14 @@ export const handler = async (): Promise<any> => {
 
   const getAlarms = async (items: DbItem[]): Promise<StatusDbItem[]> => {
     try {
+      const monitorById: { [id: string]: DbItem } = { };
+
+      for (const item of items) {
+        monitorById[item.monitorId] = item;
+      }
+
       const alarmsResult = await cw.describeAlarms({
-        AlarmNames: items.map(item => item.monitorId),
+        AlarmNames: Object.keys(monitorById),
       }).promise();
 
       const alarms = alarmsResult.MetricAlarms;
@@ -23,13 +29,20 @@ export const handler = async (): Promise<any> => {
         throw new Error(`No alarms`);
       }
 
-      return items.map((item, i) => {
-        const alarm = alarms[i];
-        return {
-          ...item,
-          status: alarm.StateValue === 'OK' ? 'green' : 'red',
-        };
-      });
+      const result = new Array<StatusDbItem>();
+      for (const alarm of alarms) {
+        if (!alarm.AlarmName) { continue; } // unlikely
+        const monitor = monitorById[alarm.AlarmName];
+        if (!monitor) { continue; } // unlikely
+        const status = alarm.StateValue === 'OK' ? 'green' : 'red';
+
+        result.push({
+          ...monitor,
+          status
+        });
+      }
+
+      return result;
     } catch (cwError) {
       return items.map(item => ({
         ...item,

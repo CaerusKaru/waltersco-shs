@@ -5,7 +5,9 @@
     "infrastructure": "bin/infrastructure.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "(cd .. && npx ng build --prod) && tsc",
+    "deploy": "npm run build && cdk deploy",
+    "diff": "npm run build && cdk diff",
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk"

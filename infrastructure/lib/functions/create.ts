@@ -32,6 +32,7 @@ export const handler = async (event: any = {}): Promise <any> => {
       Namespace: 'ServiceHealthSystem',
       Period: 60,
       AlarmName: itemId,
+      TreatMissingData: 'ignore',
       ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 1,
       Threshold: 1

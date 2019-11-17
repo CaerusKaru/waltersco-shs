@@ -1,22 +1,22 @@
-import {Construct} from '@aws-cdk/core';
-import {Bucket} from '@aws-cdk/aws-s3';
-import {BucketDeployment, ISource} from '@aws-cdk/aws-s3-deployment';
 import {DnsValidatedCertificate} from '@aws-cdk/aws-certificatemanager';
-import {AaaaRecord, ARecord, RecordTarget, IHostedZone} from '@aws-cdk/aws-route53';
-import {CloudFrontTarget} from '@aws-cdk/aws-route53-targets';
 import {
+  Behavior,
   CfnCloudFrontOriginAccessIdentity,
   CfnDistribution,
-  ViewerProtocolPolicy,
-  PriceClass,
-  HttpVersion,
-  CloudFrontWebDistributionProps,
   CloudFrontAllowedMethods,
-  SourceConfiguration,
   CloudFrontWebDistribution,
-  Behavior
+  CloudFrontWebDistributionProps,
+  HttpVersion,
+  PriceClass,
+  SourceConfiguration,
+  ViewerProtocolPolicy
 } from '@aws-cdk/aws-cloudfront';
-import {CanonicalUserPrincipal, PolicyStatement, AccountRootPrincipal} from '@aws-cdk/aws-iam';
+import {AccountRootPrincipal, CanonicalUserPrincipal, PolicyStatement} from '@aws-cdk/aws-iam';
+import {AaaaRecord, ARecord, IHostedZone, RecordTarget} from '@aws-cdk/aws-route53';
+import {CloudFrontTarget} from '@aws-cdk/aws-route53-targets';
+import {Bucket} from '@aws-cdk/aws-s3';
+import {BucketDeployment, ISource} from '@aws-cdk/aws-s3-deployment';
+import {Construct} from '@aws-cdk/core';
 
 /**
  * Properties to configure the static website construct.
@@ -82,12 +82,12 @@ export interface StaticWebsiteProps {
  * Uses S3, CloudFront, and Route53 to store and route to the website, and creates an ACM certificate.
  */
 export class StaticWebsite extends Construct {
-  readonly bucket: Bucket;
-  readonly aRecord: ARecord;
-  readonly aaaaRecord: AaaaRecord;
-  readonly certificate: DnsValidatedCertificate;
-  readonly originAccessIdentity: CfnCloudFrontOriginAccessIdentity;
-  readonly distribution: CloudFrontWebDistribution;
+  public readonly bucket: Bucket;
+  public readonly aRecord: ARecord;
+  public readonly aaaaRecord: AaaaRecord;
+  public readonly certificate: DnsValidatedCertificate;
+  public readonly originAccessIdentity: CfnCloudFrontOriginAccessIdentity;
+  public readonly distribution: CloudFrontWebDistribution;
 
   constructor(scope: Construct, name: string, props: StaticWebsiteProps) {
     super(scope, name);

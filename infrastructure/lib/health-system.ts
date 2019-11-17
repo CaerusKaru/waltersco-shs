@@ -2,10 +2,10 @@ import {Construct, Stack} from '@aws-cdk/core';
 import {join} from 'path';
 
 import { IHostedZone } from '@aws-cdk/aws-route53';
+import {Source} from '@aws-cdk/aws-s3-deployment';
 import {Api} from './api';
 import {MonitorCheck} from './monitor';
 import {StaticWebsite} from './static-website';
-import {Source} from '@aws-cdk/aws-s3-deployment';
 
 /**
  * Properties for the Service Health System.

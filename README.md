@@ -1,4 +1,26 @@
-# WalterscoShs
+# WaltersCo Service Health System
+
+Implements a service health monitor & dashboard.
+
+## Infrastructure
+
+Infrastructure is defined through the CDK and mastered under [`./infrastructure`](./infrastructure).
+
+To build (also builds the static web site):
+
+```console
+$ cd infrastructure
+$ npm install
+$ npm run build
+```
+
+To deploy (you will need credentials to the WaltersCo account):
+
+```console
+$ npm run deploy
+```
+
+## Web App
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.5.
 
