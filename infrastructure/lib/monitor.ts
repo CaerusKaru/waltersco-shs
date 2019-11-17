@@ -1,10 +1,10 @@
-import {Construct, Duration} from '@aws-cdk/core';
-import {Rule, Schedule} from '@aws-cdk/aws-events';
-import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
-import {join} from 'path';
-import {LambdaFunction} from '@aws-cdk/aws-events-targets';
 import {Table} from '@aws-cdk/aws-dynamodb';
+import {Rule, Schedule} from '@aws-cdk/aws-events';
+import {LambdaFunction} from '@aws-cdk/aws-events-targets';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
+import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
+import {Construct, Duration} from '@aws-cdk/core';
+import {join} from 'path';
 
 /**
  * The required properties for periodically updating a set of monitors
@@ -28,7 +28,7 @@ export interface MonitorCheckProps {
  * in CloudWatch Alarms for easy storage, retrieval, and visualization.
  */
 export class MonitorCheck extends Construct {
-  readonly rule: Rule;
+  public readonly rule: Rule;
 
   constructor(scope: Construct, name: string, props: MonitorCheckProps) {
     super(scope, name);
