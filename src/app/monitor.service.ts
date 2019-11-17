@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, timer} from 'rxjs';
-import {delay, map, repeat} from 'rxjs/operators';
+import {map, switchMap} from 'rxjs/operators';
 
 import {environment} from '../environments/environment';
 
@@ -25,8 +25,7 @@ export class MonitorService {
 
   getStatus(): Observable<Monitor[]> {
     if (environment.production) {
-      return this.httpClient.get<Monitor[]>(`${this.API}/status`)
-        .pipe(delay(60000), repeat());
+      return timer(1, 60000).pipe(switchMap(() => this.httpClient.get<Monitor[]>(`${this.API}/status`)));
     } else {
       return timer(1, 60000).pipe(map(() =>
         Array.from({length: LENGTH}, (_, i) => ({
