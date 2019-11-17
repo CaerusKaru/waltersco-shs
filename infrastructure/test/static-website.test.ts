@@ -1,5 +1,6 @@
 import {expect as expectCDK, haveResource} from '@aws-cdk/assert';
 import { HostedZone } from '@aws-cdk/aws-route53';
+import {Source} from '@aws-cdk/aws-s3-deployment';
 import {App, Stack} from '@aws-cdk/core';
 import {join} from 'path';
 import {StaticWebsite} from '../lib/static-website';
@@ -16,7 +17,7 @@ test('Static Website', () => {
   new StaticWebsite(stack, 'StaticWebsite', {
     hostedZone: HostedZone.fromLookup(stack, 'HostedZone', { privateZone: true, domainName: 'example.com' }),
     domainName: 'test.example.com',
-    artifactSourcePath: join(__dirname, 'dist'),
+    artifactSourcePath: Source.asset(join(__dirname, 'dist')),
   });
   // THEN
   expectCDK(stack).to(haveResource('AWS::S3::Bucket'));

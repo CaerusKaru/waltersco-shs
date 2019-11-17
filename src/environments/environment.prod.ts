@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  api: 'TODO',
+  api: 'https://status-api.waltersco.co',
 };

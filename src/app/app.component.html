@@ -1,7 +1,7 @@
 <div class="container">
   <header><h5 class="header-title">WaltersCo System Health Service</h5></header>
   <main>
-    <table class="center">
+    <table class="center" *ngIf="status$ | async as status">
       <tr>
         <td></td>
         <th *ngFor="let region of regions" scope="col">{{region}}</th>

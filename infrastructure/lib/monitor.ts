@@ -14,7 +14,13 @@ export interface MonitorCheckProps {
   /**
    * The name of the table hosting the monitors to check
    */
-  table: Table;
+  readonly table: Table;
+
+  /**
+   * How frequently to run the monitor check.
+   * @default 1 minute
+   */
+  readonly schedule?: Duration;
 }
 
 /**
@@ -45,7 +51,7 @@ export class MonitorCheck extends Construct {
 
     this.rule = new Rule(this, 'MonitorUpdate', {
       description: 'Checks the status of all registered monitors for SHS.',
-      schedule: Schedule.rate(Duration.minutes(1)),
+      schedule: Schedule.rate(props.schedule || Duration.minutes(1)),
       targets: [new LambdaFunction(monitorCheck)],
     });
   }

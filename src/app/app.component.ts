@@ -1,5 +1,5 @@
-import {Component, OnDestroy} from '@angular/core';
-import {Subscription} from 'rxjs';
+import {Component} from '@angular/core';
+import {tap} from 'rxjs/operators';
 
 import {Monitor, MonitorService} from './monitor.service';
 
@@ -9,25 +9,19 @@ import {Monitor, MonitorService} from './monitor.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent {
 
   monitors: Monitor[] = [];
   regions: string[] = [];
   apps: string[] = [];
-  private status$ = this.monitorService.getStatus();
-  private subscription: Subscription;
-
-  constructor(private monitorService: MonitorService) {
-    const processMonitors = (monitors: Monitor[]) => {
+  status$ = this.monitorService.getStatus()
+    .pipe(tap((monitors: Monitor[]) => {
       this.regions = Array.from(new Set(monitors.map(m => m.region)));
       this.apps = Array.from(new Set(monitors.map(m => m.app)));
       this.monitors = monitors;
-    };
-    this.subscription = this.status$.subscribe(processMonitors);
-  }
+    }));
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+  constructor(private monitorService: MonitorService) {
   }
 
   getStatus(region: string, app: string): 'red' | 'green' | undefined {
