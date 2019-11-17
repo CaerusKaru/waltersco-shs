@@ -1,9 +1,9 @@
-import {Construct, RemovalPolicy} from '@aws-cdk/core';
+import {Construct} from '@aws-cdk/core';
 import {Bucket} from '@aws-cdk/aws-s3';
-import {BucketDeployment, Source} from '@aws-cdk/aws-s3-deployment';
+import {BucketDeployment, ISource} from '@aws-cdk/aws-s3-deployment';
 import {DnsValidatedCertificate} from '@aws-cdk/aws-certificatemanager';
-import {AaaaRecord, ARecord, HostedZone, RecordTarget, IHostedZone} from '@aws-cdk/aws-route53';
-import {BucketWebsiteTarget, CloudFrontTarget} from '@aws-cdk/aws-route53-targets';
+import {AaaaRecord, ARecord, RecordTarget, IHostedZone} from '@aws-cdk/aws-route53';
+import {CloudFrontTarget} from '@aws-cdk/aws-route53-targets';
 import {
   CfnCloudFrontOriginAccessIdentity,
   CfnDistribution,
@@ -24,36 +24,36 @@ import {CanonicalUserPrincipal, PolicyStatement, AccountRootPrincipal} from '@aw
 export interface StaticWebsiteProps {
   /**
    * The hosted zone for the static website, e.g. example.com
-   * @default no DNS; required with domainName
+   * @default -; required with domainName
    */
   hostedZone?: IHostedZone;
 
   /**
    * The domain name for the static website, e.g. test.example.com
-   * @default no DNS; required with hostedZone
+   * @default -; required with hostedZone
    */
   domainName?: string;
 
   /**
    * Where the artifacts for the website are stored.
    */
-  artifactSourcePath: string;
+  artifactSourcePath: ISource;
 
   /**
    * The root index for the static website, e.g. index.html
    * @default index.html
    */
-  defaultFile?: string;
+  indexFile?: string;
 
   /**
-   * Whether to add SPA functionality to the CloudFront distribution
+   * Whether to add single-page application (SPA) functionality to the CloudFront distribution
    * @default false
    */
   spa?: boolean;
 
   /**
    * Source configurations to set for the CloudFront distribution.
-   * @default A default source configuration is always added
+   * @default - A default source configuration is always added
    */
   sourceConfigs?: SourceConfiguration[];
 
@@ -78,7 +78,7 @@ export interface StaticWebsiteProps {
 }
 
 /**
- * Exposes https://status.waltersco.co (https://status.waltersco.co/) based on result of a periodic (1 min) HTTP pings.
+ * Exposes a status reporting API based on result of a periodic (1 min) HTTP pings.
  * Uses S3, CloudFront, and Route53 to store and route to the website, and creates an ACM certificate.
  */
 export class StaticWebsite extends Construct {
@@ -144,9 +144,9 @@ export class StaticWebsite extends Construct {
         ],
       });
 
-    const resolvedDefaultFile = props.defaultFile || 'index.html';
-    if (resolvedDefaultFile.startsWith('/')) {
-      throw new Error(`Default file cannot start with a /. Got ${resolvedDefaultFile}`);
+    const resolvedindexFile = props.indexFile || 'index.html';
+    if (resolvedindexFile.startsWith('/')) {
+      throw new Error(`Default file cannot start with a /. Got ${resolvedindexFile}`);
     }
 
     const errorConfigs: CfnDistribution.CustomErrorResponseProperty[] = [];
@@ -158,12 +158,12 @@ export class StaticWebsite extends Construct {
       errorConfigs.push({
         errorCode: 404,
         responseCode: 200,
-        responsePagePath: `/${resolvedDefaultFile}`,
+        responsePagePath: `/${resolvedindexFile}`,
       });
     }
 
     const cloudFrontProps: CloudFrontWebDistributionProps = {
-      defaultRootObject: resolvedDefaultFile,
+      defaultRootObject: resolvedindexFile,
       enableIpV6: true,
       httpVersion: HttpVersion.HTTP2,
       viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -204,7 +204,7 @@ export class StaticWebsite extends Construct {
     }
 
     new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(props.artifactSourcePath)],
+      sources: [props.artifactSourcePath],
       destinationBucket: this.bucket,
       distribution: this.distribution,
     });

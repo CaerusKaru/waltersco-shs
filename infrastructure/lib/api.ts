@@ -1,9 +1,15 @@
-import {DomainNameOptions, DomainNameProps, EndpointType, LambdaIntegration, RestApi} from '@aws-cdk/aws-apigateway';
+import {
+  Cors,
+  DomainNameOptions,
+  EndpointType,
+  LambdaIntegration,
+  RestApi
+} from '@aws-cdk/aws-apigateway';
 import { DnsValidatedCertificate } from '@aws-cdk/aws-certificatemanager';
 import {AttributeType, Table} from '@aws-cdk/aws-dynamodb';
 import { PolicyStatement } from '@aws-cdk/aws-iam';
 import {AssetCode, Function, Runtime} from '@aws-cdk/aws-lambda';
-import { AddressRecordTarget, ARecord, IHostedZone } from '@aws-cdk/aws-route53';
+import {ARecord, IHostedZone, RecordTarget} from '@aws-cdk/aws-route53';
 import { ApiGateway } from '@aws-cdk/aws-route53-targets';
 import {CfnOutput, Construct, RemovalPolicy} from '@aws-cdk/core';
 import {join} from 'path';
@@ -108,7 +114,7 @@ export class Api extends Construct {
       ]
     });
 
-    this.table.grantReadWriteData(getAll);
+    this.table.grantReadData(getAll);
     this.table.grantReadWriteData(createOne);
     this.table.grantReadWriteData(updateOne);
     this.table.grantReadWriteData(deleteOne);
@@ -142,19 +148,17 @@ export class Api extends Construct {
       new ARecord(this, 'CustomDomainAliasRecord', {
         zone: props.hostedZone,
         recordName,
-        target: AddressRecordTarget.fromAlias(new ApiGateway(this.api))
+        target: RecordTarget.fromAlias(new ApiGateway(this.api))
       });
     }
 
     const status = this.api.root.addResource('status');
     const getStatusIntegration = new LambdaIntegration(getAll);
     status.addMethod('GET', getStatusIntegration);
-    status.addCorsPreflight({allowOrigins: ['*'], allowMethods: ['GET']});
 
     const monitors = this.api.root.addResource('monitors');
     const createMonitorIntegration = new LambdaIntegration(createOne);
     monitors.addMethod('POST', createMonitorIntegration);
-    monitors.addCorsPreflight({allowOrigins: ['*'], allowMethods: ['POST']});
 
     const singleMonitor = monitors.addResource('{id}');
 
@@ -164,6 +168,6 @@ export class Api extends Construct {
     const deleteMonitorIntegration = new LambdaIntegration(deleteOne);
     singleMonitor.addMethod('DELETE', deleteMonitorIntegration);
 
-    singleMonitor.addCorsPreflight({allowOrigins: ['*'], allowMethods: ['PUT', 'DELETE']});
+    this.api.root.addCorsPreflight({allowOrigins: Cors.ALL_ORIGINS, allowMethods: Cors.ALL_METHODS});
   }
 }
