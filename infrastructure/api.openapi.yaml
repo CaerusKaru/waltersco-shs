@@ -1,0 +1,107 @@
+swagger: "2.0"
+info:
+  description: "WaltersCo Health System API"
+  version: "1.0.0"
+  title: "WaltersCo Health System"
+host: "status-api.waltersco.co"
+basePath: "/"
+schemes:
+- "https"
+paths:
+
+  /status:
+    get:
+      summary: "retrieves the health status for all monitors"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/MonitorStatus"
+
+  /monitors:
+    post:
+      summary: "creates a new monitor"
+      consumes:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "monitor"
+          description: "monitor configuration"
+          required: true
+          schema:
+            $ref: "#/definitions/MonitorConfiguration"
+      produces:
+        - "application/json"
+      responses:
+        201:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/MonitorStatus"
+
+  /monitors/{monitorId}:
+    put:
+      summary: "update a monitor"
+      consumes:
+        - "application/json"
+      parameters:
+        - name: "monitorId"
+          in: "path"
+          description: "monitor id"
+          required: true
+          type: "string"
+        - name: "monitor"
+          in: "body"
+          description: "monitor configuration"
+          required: true
+          schema:
+            $ref: "#/definitions/MonitorConfiguration"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/MonitorStatus"
+        404:
+          description: "not found"
+        
+    delete:
+      summary: "delete a monitor"
+      consumes:
+        - "application/json"
+      parameters:
+        - name: "monitorId"
+          in: "path"
+          description: "monitor id"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: OK
+
+definitions:
+  MonitorConfiguration:
+    type: "object"
+    properties:
+      app:
+        type: "string"
+      region:
+        type: "string"
+      endpoint:
+        type: "string"
+  MonitorStatus:
+    type: "object"
+    properties:
+      monitorId:
+        type: "integer"
+      app:
+        type: "string"
+      region:
+        type: "string"
+      endpoint:
+        type: "string"
+

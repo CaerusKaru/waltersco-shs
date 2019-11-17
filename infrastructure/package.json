@@ -1,0 +1,43 @@
+{
+  "name": "infrastructure",
+  "version": "0.1.0",
+  "bin": {
+    "infrastructure": "bin/infrastructure.js"
+  },
+  "scripts": {
+    "build": "(cd .. && npx ng build --prod) && tsc",
+    "deploy": "npm run build && cdk deploy",
+    "diff": "npm run build && cdk diff",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "^1.6.1",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.12.7",
+    "aws-cdk": "^1.15.0",
+    "aws-sdk": "^2.568.0",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.1.0",
+    "typescript": "~3.6.2"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-apigateway": "^1.15.0",
+    "@aws-cdk/aws-certificatemanager": "^1.15.0",
+    "@aws-cdk/aws-cloudwatch": "^1.15.0",
+    "@aws-cdk/aws-dynamodb": "^1.15.0",
+    "@aws-cdk/aws-events": "^1.15.0",
+    "@aws-cdk/aws-events-targets": "^1.15.0",
+    "@aws-cdk/aws-lambda": "^1.15.0",
+    "@aws-cdk/aws-route53": "^1.15.0",
+    "@aws-cdk/aws-route53-targets": "^1.15.0",
+    "@aws-cdk/aws-s3-deployment": "^1.15.0",
+    "@aws-cdk/aws-sns": "^1.15.0",
+    "@aws-cdk/aws-sns-subscriptions": "^1.15.0",
+    "@aws-cdk/aws-sqs": "^1.15.0",
+    "@aws-cdk/core": "^1.15.0",
+    "uuid": "^3.3.3"
+  }
+}

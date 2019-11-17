@@ -1,0 +1,60 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+header {
+  height: 24px;
+  background-color: lightgray;
+  position: relative;
+}
+
+.header-title {
+  margin: 0;
+  padding-left: 8px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+main {
+  flex: 1;
+  position: relative;
+}
+
+footer {
+  height: 24px;
+  background-color: lightgray;
+  position: relative;
+}
+
+.footer-title {
+  margin: 0;
+  padding-left: 8px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+circle {
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 20px 20px;
+}
+
+table.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+td {
+  text-align: center;
+}
