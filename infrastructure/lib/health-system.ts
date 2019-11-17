@@ -4,7 +4,8 @@ import {join} from 'path';
 import { IHostedZone } from '@aws-cdk/aws-route53';
 import {Api} from './api';
 import {MonitorCheck} from './monitor';
-import {StaticWebsite, StaticWebsiteProps} from './static-website';
+import {StaticWebsite} from './static-website';
+import {Source} from '@aws-cdk/aws-s3-deployment';
 
 /**
  * Properties for the Service Health System.
@@ -43,7 +44,7 @@ export class ServiceHealthSystem extends Construct {
     this.website = new StaticWebsite(this, 'StaticWebsite', {
       hostedZone: props.hostedZone,
       domainName: props.websiteDomainName,
-      artifactSourcePath: join(__dirname, '..', '..', 'dist', 'waltersco-shs'),
+      artifactSourcePath: Source.asset(join(__dirname, '..', '..', 'dist', 'waltersco-shs')),
     });
   }
 }
