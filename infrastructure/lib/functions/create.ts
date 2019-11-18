@@ -6,7 +6,6 @@ import { httpBadRequestError, httpResponse, httpServerError } from './http-respo
 import { Monitor, MonitorConfiguration } from './item';
 import { pingMonitor } from './monitor-check';
 const TABLE_NAME = process.env.TABLE_NAME || '';
-const PRIMARY_KEY = process.env.PRIMARY_KEY || '';
 
 export const handler = async (event: any = {}): Promise <any> => {
   if (!event.body) {
