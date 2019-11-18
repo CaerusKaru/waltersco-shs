@@ -1,7 +1,7 @@
 /**
  * An individual monitor.
  */
-export interface Item {
+export interface MonitorConfiguration {
   app: string;
   region: string;
   endpoint: string;
@@ -10,13 +10,13 @@ export interface Item {
 /**
  * A monitor that has been stored in the database.
  */
-export interface DbItem extends Item {
+export interface Monitor extends MonitorConfiguration {
   monitorId: string;
 }
 
 /**
  * A monitor with its fetched status.
  */
-export interface StatusDbItem extends DbItem {
+export interface MonitorWithStatus extends Monitor {
   status: 'red' | 'green';
 }

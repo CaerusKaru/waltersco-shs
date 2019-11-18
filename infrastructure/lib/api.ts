@@ -82,7 +82,7 @@ export class Api extends Construct {
       },
       initialPolicy: [
         new PolicyStatement({
-          actions: ['cloudwatch:PutMetricAlarm'],
+          actions: ['cloudwatch:PutMetricAlarm', 'cloudwatch:SetAlarmState'],
           resources: ['*'],
         })
       ]
