@@ -16,3 +16,7 @@ export function httpServerError(err: Error) {
 export function httpNotFoundError(itemId: string) {
   return httpResponse({ error: `item ${itemId} not found`, itemId }, 404);
 }
+
+export function httpBadRequestError(message: string) {
+  return httpResponse({ error: `Bad request: ${message}` }, 400);
+}

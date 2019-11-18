@@ -1,8 +1,9 @@
-import AWS = require('aws-sdk');
+import * as AWS from 'aws-sdk';
 const db = new AWS.DynamoDB.DocumentClient();
 const cw = new AWS.CloudWatch();
-import crypto = require("crypto");
-import { httpResponse, httpServerError } from './http-response';
+import * as crypto from "crypto";
+import { httpBadRequestError, httpResponse, httpServerError } from './http-response';
+import { Item } from './item';
 const TABLE_NAME = process.env.TABLE_NAME || '';
 const PRIMARY_KEY = process.env.PRIMARY_KEY || '';
 
@@ -11,11 +12,19 @@ export const handler = async (event: any = {}): Promise <any> => {
     return httpResponse({ error: 'invalid request, you are missing the parameter body' }, 400);
   }
 
-  const item = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
-  const itemId = generateId();
+  const item: Item = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
+
+  // validate all required fields are here
+  if (!item.app) { return httpBadRequestError('"app" is required'); }
+  if (!item.endpoint) { return httpBadRequestError('"endpoint" is required'); }
+  if (!item.region) { return httpBadRequestError('"region" is required'); }
+
+  const monitorId = generateId();
   const fullItem = {
-    [PRIMARY_KEY]: itemId,
-    ...item
+    [PRIMARY_KEY]: monitorId,
+    app: item.app,
+    endpoint: item.endpoint,
+    region: item.region
   };
 
   const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
@@ -31,7 +40,7 @@ export const handler = async (event: any = {}): Promise <any> => {
       Statistic: 'Sum',
       Namespace: 'ServiceHealthSystem',
       Period: 60,
-      AlarmName: itemId,
+      AlarmName: monitorId,
       TreatMissingData: 'ignore',
       ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 1,
