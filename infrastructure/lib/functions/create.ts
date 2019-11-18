@@ -1,26 +1,35 @@
-import AWS = require('aws-sdk');
+import * as AWS from 'aws-sdk';
 const db = new AWS.DynamoDB.DocumentClient();
 const cw = new AWS.CloudWatch();
-import crypto = require("crypto");
-import { httpResponse, httpServerError } from './http-response';
+import * as crypto from "crypto";
+import { httpBadRequestError, httpResponse, httpServerError } from './http-response';
+import { Monitor, MonitorConfiguration } from './item';
+import { pingMonitor } from './monitor-check';
 const TABLE_NAME = process.env.TABLE_NAME || '';
-const PRIMARY_KEY = process.env.PRIMARY_KEY || '';
 
 export const handler = async (event: any = {}): Promise <any> => {
   if (!event.body) {
     return httpResponse({ error: 'invalid request, you are missing the parameter body' }, 400);
   }
 
-  const item = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
-  const itemId = generateId();
-  const fullItem = {
-    [PRIMARY_KEY]: itemId,
-    ...item
+  const item: MonitorConfiguration = typeof event.body === 'object' ? event.body : JSON.parse(event.body);
+
+  // validate all required fields are here
+  if (!item.app) { return httpBadRequestError('"app" is required'); }
+  if (!item.endpoint) { return httpBadRequestError('"endpoint" is required'); }
+  if (!item.region) { return httpBadRequestError('"region" is required'); }
+
+  const monitorId = generateId();
+  const monitor: Monitor = {
+    monitorId,
+    app: item.app,
+    endpoint: item.endpoint,
+    region: item.region
   };
 
   const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
     TableName: TABLE_NAME,
-    Item: fullItem
+    Item: monitor
   };
 
   try {
@@ -31,14 +40,17 @@ export const handler = async (event: any = {}): Promise <any> => {
       Statistic: 'Sum',
       Namespace: 'ServiceHealthSystem',
       Period: 60,
-      AlarmName: itemId,
+      AlarmName: monitorId,
       TreatMissingData: 'ignore',
       ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 1,
       Threshold: 1
     }).promise();
 
-    return httpResponse(fullItem, 201);
+    // ping & update monitor
+    await pingMonitor(monitor);
+
+    return httpResponse(monitor, 201);
   } catch (error) {
     return httpServerError(error);
   }

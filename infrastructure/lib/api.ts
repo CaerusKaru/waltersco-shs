@@ -82,7 +82,7 @@ export class Api extends Construct {
       },
       initialPolicy: [
         new PolicyStatement({
-          actions: ['cloudwatch:PutMetricAlarm'],
+          actions: ['cloudwatch:PutMetricAlarm', 'cloudwatch:SetAlarmState'],
           resources: ['*'],
         })
       ]
@@ -158,6 +158,7 @@ export class Api extends Construct {
 
     const monitors = this.api.root.addResource('monitors');
     const createMonitorIntegration = new LambdaIntegration(createOne);
+    monitors.addMethod('GET', getStatusIntegration);
     monitors.addMethod('POST', createMonitorIntegration);
 
     const singleMonitor = monitors.addResource('{id}');

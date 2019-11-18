@@ -1,4 +1,4 @@
-import {DbItem, StatusDbItem} from './item';
+import {Monitor, MonitorWithStatus} from './item';
 
 import AWS = require('aws-sdk');
 import { httpResponse, httpServerError } from './http-response';
@@ -12,9 +12,9 @@ export const handler = async (): Promise<any> => {
     TableName: TABLE_NAME
   };
 
-  const getAlarms = async (items: DbItem[]): Promise<StatusDbItem[]> => {
+  const getAlarms = async (items: Monitor[]): Promise<MonitorWithStatus[]> => {
     try {
-      const monitorById: { [id: string]: DbItem } = { };
+      const monitorById: { [id: string]: Monitor } = { };
 
       for (const item of items) {
         monitorById[item.monitorId] = item;
@@ -29,7 +29,7 @@ export const handler = async (): Promise<any> => {
         throw new Error(`No alarms`);
       }
 
-      const result = new Array<StatusDbItem>();
+      const result = new Array<MonitorWithStatus>();
       for (const alarm of alarms) {
         if (!alarm.AlarmName) { continue; } // unlikely
         const monitor = monitorById[alarm.AlarmName];
@@ -53,8 +53,8 @@ export const handler = async (): Promise<any> => {
 
   try {
     const response = await db.scan(params).promise();
-    const items = response.Items as DbItem[];
-    const statusItems: StatusDbItem[] = await getAlarms(items);
+    const items = response.Items as Monitor[];
+    const statusItems: MonitorWithStatus[] = await getAlarms(items);
     return httpResponse(statusItems);
   } catch (error) {
     return httpServerError(error);
